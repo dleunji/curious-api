@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using DevExpress.Xpo;
 
 #nullable disable
 
@@ -20,6 +22,7 @@ namespace board.Models
 
         public int MemberId { get; set; }
         public string MemberName { get; set; }
+        
         public string MemberPassword { get; set; }
         public DateTime? CreatedAt { get; set; }
         public string Introduction { get; set; }

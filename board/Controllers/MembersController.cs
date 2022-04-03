@@ -7,9 +7,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using board;
 using board.Models;
+using board.Request;
+using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.CodeAnalysis.CodeActions;
 
 namespace board.Controllers
 {
+    [EnableCors("LowCorsPolicy")]
     [Route("api/[controller]")]
     [ApiController]
     public class MembersController : ControllerBase
@@ -73,15 +78,52 @@ namespace board.Controllers
             return NoContent();
         }
 
-        // POST: api/Members
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Member>> PostMember(Member member)
+        // 회원가입
+        [HttpPost("register")]
+        public ActionResult<Member> RegisterMember(MemberRequest memberRequest)
         {
-            _context.Members.Add(member);
-            await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetMember", new { id = member.MemberId }, member);
+            var check = _context.Members
+                .Any(m => m.MailAddress == memberRequest.MailAddress);
+            if (check)
+            {
+                return BadRequest(new ErrorResponse(408, "Duplicated MailAddress"));
+            }
+
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(memberRequest.MemberPassword);
+            var member = _context.Members
+                .FromSqlInterpolated($"EXECUTE SP_RegisterMember {memberRequest.MemberName}, {hashedPassword}, {memberRequest.MailAddress}")
+                .AsEnumerable()
+                .FirstOrDefault();
+
+            return Ok(member);
+        }
+        
+        // 로그인
+        [HttpPost("signin")]
+        public ActionResult<Member> SignInMember(MemberRequest memberRequest)
+        {
+            var member = _context.Members
+                .FromSqlInterpolated($"EXECUTE SP_SignInMember {memberRequest.MailAddress}")
+                .AsEnumerable()
+                .SingleOrDefault();
+            
+            // 가입되지 않은 정보
+            if (member == null)
+            {
+                return NotFound();
+            }
+
+            var verified = BCrypt.Net.BCrypt.Verify(memberRequest.MemberPassword, member.MemberPassword);
+            if (verified)
+            {
+                return Ok(member);
+            }
+            else
+            {
+                return BadRequest(new ErrorResponse(308, "Wrong Password"));
+            }
+            // TODO: 인증 성공 시 JWT 토큰 전달
         }
 
         // DELETE: api/Members/5

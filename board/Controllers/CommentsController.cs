@@ -21,9 +21,8 @@ namespace board.Controllers
         {
             _context = context;
         }
-     
-
-        // ´ñ±Û
+        
+        
         [HttpPost("comment")]
         public ActionResult PostCommentToA(CommentRequest comment)
         {
@@ -34,9 +33,7 @@ namespace board.Controllers
 
             return Ok(c);
         }
-
-
-        // ´ñ±Û¿¡ ´ëÇÑ ´ä±Û
+        
         [HttpPost("reply")]
         public ActionResult PostReplyToA(ReplyRequest reply)
         {
@@ -48,9 +45,8 @@ namespace board.Controllers
             return Ok(c);
         }
 
-        // TODO: ÆäÀÌÁö³×ÀÌ¼Ç, Æ÷½ºÆ®¸¶´Ù °¡Á®¿À±â
-
-        // GET: api/Comments
+        // TODO: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì¼ï¿½, ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Comment>>> GetComments()
         {
