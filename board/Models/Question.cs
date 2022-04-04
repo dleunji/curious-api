@@ -9,7 +9,6 @@ namespace board.Models
     {
         public Question()
         {
-            Sympathies = new HashSet<Sympathy>();
         }
 
         public int QuestionId { get; set; }
@@ -22,6 +21,7 @@ namespace board.Models
         public int? ViewedCnt { get; set; }
 
         public virtual Member Member { get; set; }
-        public virtual ICollection<Sympathy> Sympathies { get; set; }
+
+        public virtual ICollection<Comment> Comments { get; set; }
     }
 }

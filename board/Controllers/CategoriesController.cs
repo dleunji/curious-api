@@ -20,16 +20,14 @@ namespace board.Controllers
         {
             _context = context;
         }
-
-        // Ä«Å×°í¸® ºÒ·¯¿À±â
+        
+        // ì¹´í…Œê³ ë¦¬ ë¦¬ìŠ¤íŠ¸ ê°€ì ¸ì˜¤ê¸°
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Category>>> GetCategory()
         {
             return await _context.Categories
                 .Where(c => c.ParentCategoryId == null)
-                // ÁßºÐ·ù
                 .Include(c => c.InverseParentCategory)
-                // ¼ÒºÐ·ù
                 .ThenInclude(c => c.InverseParentCategory)
                 .ToListAsync();
         }

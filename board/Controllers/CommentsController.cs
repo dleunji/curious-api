@@ -27,7 +27,7 @@ namespace board.Controllers
         public ActionResult PostCommentToA(CommentRequest comment)
         {
             var c = _context.Comments
-                .FromSqlInterpolated($"EXECUTE SP_PostComment {comment.MemberId}, {comment.PostId}, {comment.Content}, {comment.PostType}")
+                .FromSqlInterpolated($"EXECUTE SP_PostComment {comment.MemberId}, {comment.QuestionId}, {comment.Content}")
                 .AsEnumerable()
                 .FirstOrDefault();
 
@@ -38,85 +38,43 @@ namespace board.Controllers
         public ActionResult PostReplyToA(ReplyRequest reply)
         {
             var c = _context.Comments
-                .FromSqlInterpolated($"EXECUTE SP_PostReply {reply.MemberId}, {reply.PostId}, {reply.Content}, {reply.ParentCommentId}")
+                .FromSqlInterpolated($"EXECUTE SP_PostReply {reply.MemberId}, {reply.QuestionId}, {reply.Content}, {reply.ParentCommentId}")
                 .AsEnumerable()
                 .FirstOrDefault();
 
             return Ok(c);
         }
 
-        // TODO: ���������̼�, ����Ʈ���� ��������
-        
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Comment>>> GetComments()
         {
             return await _context.Comments.ToListAsync();
         }
-
-        // GET: api/Comments/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Comment>> GetComment(int id)
+        
+        // 특정 질문의 댓글 리스트
+        [HttpGet("questions/{questionId}/comments")]
+        public ActionResult GetCommentsByQuestionId(int questionId)
         {
-            var comment = await _context.Comments.FindAsync(id);
+            var comments = _context.Comments
+                .Where(c => c.QuestionId == questionId && c.Depth == 0)
+                .Include(c => c.InverseParentComment)
+                .ThenInclude(c => c.InverseParentComment)
+                .ThenInclude(c => c.InverseParentComment)
+                .ToList();
 
-            if (comment == null)
-            {
-                return NotFound();
-            }
-
-            return comment;
+            return Ok(comments);
         }
-
-        // PUT: api/Comments/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutComment(int id, Comment comment)
+        
+        // 특정 질문에 댓글을 단 유저 리스트
+        [HttpGet("questions/{questionId}/members")]
+        public ActionResult GetMembersByQuestionId(int questionId)
         {
-            if (id != comment.CommentId)
-            {
-                return BadRequest();
-            }
+            var members = _context.Comments
+                .Where(c => c.QuestionId == questionId)
+                .Select(c => c.Member).Distinct();
 
-            _context.Entry(comment).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CommentExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            return Ok(members);
         }
-
-        // DELETE: api/Comments/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteComment(int id)
-        {
-            var comment = await _context.Comments.FindAsync(id);
-            if (comment == null)
-            {
-                return NotFound();
-            }
-
-            _context.Comments.Remove(comment);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool CommentExists(int id)
-        {
-            return _context.Comments.Any(e => e.CommentId == id);
-        }
+        
     }
 }

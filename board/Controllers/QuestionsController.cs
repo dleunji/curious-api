@@ -15,11 +15,11 @@ namespace board.Controllers
     [EnableCors("LowCorsPolicy")]
     [Route("api/[controller]")]
     [ApiController]
-    public class QuestionController : ControllerBase
+    public class QuestionsController : ControllerBase
     {
         private readonly BoardDbContext _context;
 
-        public QuestionController(BoardDbContext context)
+        public QuestionsController(BoardDbContext context)
         {
             _context = context;
         }
@@ -33,6 +33,9 @@ namespace board.Controllers
                 .AsEnumerable()
                 .FirstOrDefault();
 
+            var member = _context.Members.SingleOrDefault(m => m.MemberId == question.MemberId);
+            q.Member = member;
+
             return Ok(q);
         }
 
@@ -40,21 +43,41 @@ namespace board.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Question>>> GetQuestions()
         {
-            return await _context.Questions.ToListAsync();
+            return await _context.Questions
+                .Include(q => q.Member)
+                .ToListAsync();
         }
 
-        // GET: api/Question/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Question>> GetQuestion(int id)
+        [HttpGet("{questionId}")]
+        public ActionResult<Question> GetQuestion(int questionId)
         {
-            var question = await _context.Questions.FindAsync(id);
+            var question = _context.Questions
+                .Where(q => q.QuestionId == questionId)
+                .Include(q => q.Member)
+                .FirstOrDefault();
+            
+                // .Include(q => q.Comments.Where(c => c.Depth == 0))
+                // .ThenInclude(c => c.Member)
+                // .Include(q => q.Comments)
+                // .ThenInclude(c => c.InverseParentComment)
+                // .ThenInclude(c => c.Member)
+                // .FirstOrDefault();
+
+
+                //    .ThenInclude(c => c.Member)
+                // .Include(q => q.Member)
+                // .FirstOrDefault();
+
 
             if (question == null)
             {
                 return NotFound();
             }
 
-            return question;
+            // var member = _context.Members.SingleOrDefault(m => m.MemberId == question.MemberId);
+            // question.Member = member;
+
+            return Ok(question);
         }
 
         // PUT: api/Question/5
